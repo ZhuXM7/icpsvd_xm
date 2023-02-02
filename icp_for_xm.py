@@ -4,17 +4,17 @@ import matplotlib.pyplot as plt
 import time
 
 def ICPSVD(source, target, threshold, maxIteration, pltornot):
-    print(8)
-    source_mod, source_centroid = shift_model_to_origin(source)
-    target_mod, target_centroid = shift_model_to_origin(target)
+    # print(8)
+    # source_mod, source_centroid = shift_model_to_origin(source)
+    # target_mod, target_centroid = shift_model_to_origin(target)
     print(6)
 
     finhom = np.identity(4)
     reqR = np.identity(3)
     reqT = [0.0, 0.0, 0.0]
-    TREE = KDTree(target_mod)
+    TREE = KDTree(target)
     print(7)
-    n = np.size(source_mod, 0)
+    n = np.size(source, 0)
     print(9)
     err = 999999
     errStorage = []
@@ -27,7 +27,7 @@ def ICPSVD(source, target, threshold, maxIteration, pltornot):
         """Conduct a tree search"""
         # print(type(source_mod), source_mod)
         print(11)
-        distance, index = TREE.query(source_mod)
+        distance, index = TREE.query(source)
         print(1)
         # print(distance, index)
         index_list = index.tolist()
@@ -41,11 +41,11 @@ def ICPSVD(source, target, threshold, maxIteration, pltornot):
         print(2)
 
         """Calculate the Centroid of moving and fixed point clouds (Corresponded points)"""
-        com = np.mean(source_mod, 0)
-        cof = indxtMean(index, target_mod)
+        com = np.mean(source, 0)
+        cof = indxtMean(index, target)
         print(3)
         """Form the W matrix to calculate the necessary Rot Matrix"""
-        W = np.dot(np.transpose(source_mod), indxtfixed(index, target_mod)) - n * np.outer(com, cof)
+        W = np.dot(np.transpose(source), indxtfixed(index, target)) - n * np.outer(com, cof)
         U, _, V = np.linalg.svd(W, full_matrices=False)
         tempR = np.dot(V.T, U.T)
         print(4)
@@ -53,15 +53,15 @@ def ICPSVD(source, target, threshold, maxIteration, pltornot):
         tempT = cof - np.dot(tempR, com)
         print(5)
         """Apply the Computed Rotation and Translation to the Moving Points"""
-        source_mod = (tempR.dot(source_mod.T)).T
-        source_mod = np.add(source_mod, tempT)
+        source = (tempR.dot(source.T)).T
+        source = np.add(source, tempT)
         print(6)
         """Store the RotoTranslation"""
         reqR = np.dot(tempR, reqR)
         reqT = np.add(np.dot(tempR, reqT), tempT)
         print('{} Cycle the MSE is equal to {}'.format(i + 1, err))
         if pltornot == True:
-            plotter(target_mod, source_mod, i)
+            plotter(target, source, i)
             """Error Check """
         if abs(preverr - err) < threshold:
             """Create a Homogeneous Matrix of the Results and plot"""
@@ -74,7 +74,7 @@ def ICPSVD(source, target, threshold, maxIteration, pltornot):
         end_time = time.time()
         print("Takes: {:.2f}秒".format(end_time - start_time))
 
-    return finhom, errStorage, source_mod
+    return finhom, errStorage, source
 
 def shift_model_to_origin(node_array):
     # print("before", node_array[len(node_array)-1])
